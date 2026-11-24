@@ -2,6 +2,8 @@
 //! DLL/cdylib and as a WASM module (via the `guest` helper module).
 
 use anyhow::Result;
+use luma_api::event::EventPriority;
+use luma_api::events::{WorkspaceLoadedEvent, WORKSPACE_LOADED_EVENT};
 use luma_api::{CoreAPI, ExtensionsCoreAPI, Shared};
 use luma_extensions::{LumaExtension, log};
 
@@ -30,6 +32,25 @@ impl LumaExtension for ExampleExtension {
                 extensions_core.loaded_extension_names()
             ),
         );
+
+        // The guest bus is bridged to the host, so this listener receives the
+        // same event that the IDE fires when a workspace finishes loading.
+        core_api.event_bus().register::<WorkspaceLoadedEvent, _>(
+            "example-extension",
+            EventPriority::Normal,
+            false,
+            |event, _context| {
+                log(
+                    3,
+                    &format!(
+                        "Workspace loaded: {} ({})",
+                        event.workspace.face().title,
+                        event.workspace.face().path
+                    ),
+                );
+            },
+        );
+        log(3, &format!("Listening for {WORKSPACE_LOADED_EVENT}"));
         Ok(())
     }
 
