@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Example Luma Extension Panel</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+    body { margin: 0; padding: 16px; background: #1e1e1e; color: #ddd; font-size: 13px; }
+    h1 { margin: 0 0 12px; font-size: 15px; }
+    button { padding: 6px 10px; border: 1px solid #555; border-radius: 4px; background: #2d2d2d; color: #ddd; cursor: pointer; }
+    button:hover { background: #3a3a3a; }
+    #workspace { color: #aaa; margin-bottom: 12px; overflow-wrap: anywhere; }
+    #log { margin: 12px 0 0; padding: 8px; min-height: 80px; max-height: 180px; overflow: auto; background: #252526; border: 1px solid #3a3a3a; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Example extension panel</h1>
+  <div id="workspace">No workspace reported yet.</div>
+  <button id="fire" type="button">Fire example:panel-button</button>
+  <pre id="log"></pre>
+
+  <script>
+    // This page runs in a sandboxed iframe. It cannot access Luma's Vue app or
+    // Tauri IPC; it talks to the host with a small postMessage protocol.
+    const SOURCE = "luma-extension-frame";
+    const HOST_TO_FRAME = "host-to-iframe";
+    const FRAME_TO_HOST = "iframe-to-host";
+    const log = document.getElementById("log");
+
+    function write(line) {
+      log.textContent = `${new Date().toLocaleTimeString()} ${line}\n${log.textContent}`;
+    }
+
+    function send(event, payload) {
+      window.parent.postMessage({ source: SOURCE, direction: FRAME_TO_HOST, event, payload }, "*");
+    }
+
+    window.addEventListener("message", (message) => {
+      const data = message.data;
+      if (!data || data.source !== SOURCE || data.direction !== HOST_TO_FRAME) return;
+      if (data.event === "luma:extension-ui:workspace") {
+        const path = data.payload?.path ?? "<none>";
+        document.getElementById("workspace").textContent = `Workspace: ${path}`;
+        return;
+      }
+      write(`${data.event}: ${JSON.stringify(data.payload)}`);
+    });
+
+    document.getElementById("fire").addEventListener("click", () => {
+      send("example:panel-button", { clickedAt: new Date().toISOString() });
+      write("sent example:panel-button");
+    });
+
+    write("panel ready");
+  </script>
+</body>
+</html>

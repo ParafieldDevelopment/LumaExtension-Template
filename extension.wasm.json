@@ -6,5 +6,26 @@
   "entry": "example_extension.wasm",
   "dependencies": [],
   "authors": ["You!"],
-  "license": "MIT"
+  "license": "MIT",
+  "frontend": {
+    "entry": "frontend/index.html",
+    "contributions": {
+      "commands": [
+        { "id": "openPanel", "label": "Example: Open Panel (WASM)", "category": "Example", "keys": "Alt+Shift+E" }
+      ],
+      "menus": [
+        { "location": "titlebar/main", "commandId": "openPanel", "group": "09_example", "order": 10 }
+      ],
+      "toolWindows": [
+        {
+          "id": "panel",
+          "title": "Example Panel (WASM)",
+          "position": "right-bottom",
+          "order": 40,
+          "defaultOpen": false
+        }
+      ],
+      "events": ["luma:file-opened", "luma:workspace-loaded", "example:panel-button"]
+    }
+  }
 }
